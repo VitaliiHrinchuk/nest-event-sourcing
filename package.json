@@ -1,16 +1,16 @@
 {
   "name": "nest-event-sourcing",
   "version": "1.0.0",
-  "description": "",
+  "description": "the package contains a set of classes and interfaces to implement event sourcing with nest js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "npm run build && ts-node test.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare" : "npm run build",
   },
-  "author": "",
-  "license": "ISC",
+  "author": "locopio",
+  "license": "MIT",
   "devDependencies": {
     "@nestjs/common": "^8.2.6",
     "@nestjs/core": "^8.2.6",
@@ -30,6 +30,8 @@
     "uuid": "^8.3.2"
   },
   "files": [
-    "/dist"
-  ]
+    "/dist/**/*"
+  ],
+  "keywords": ["nestjs", "event store", "event sourcing"],
+  "homepage": "https://github.com/VitaliiHrinchuk/nest-event-sourcing"
 }
