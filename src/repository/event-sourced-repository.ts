@@ -8,8 +8,16 @@ import {Injectable} from "@nestjs/common";
 @Injectable()
 export class EventSourcedRepository implements Repository {
 
+    /**
+     * Event Store
+     * @protected
+     */
     protected store: EventStore;
 
+    /**
+     * Event Dispatcher
+     * @protected
+     */
     protected dispatcher: EventDispatcher;
 
     constructor(store: EventStore, dispatcher: EventDispatcher) {
@@ -17,6 +25,10 @@ export class EventSourcedRepository implements Repository {
         this.dispatcher = dispatcher;
     }
 
+    /**
+     * Commit and dispatch recorded events
+     * @param aggregate AggregateRoot
+     */
     public async save(aggregate: AggregateRoot): Promise<void> {
         const recordedEvents: DomainEvent[] = aggregate.getRecordedEvents();
         console.log('============ Commit events')
@@ -28,10 +40,20 @@ export class EventSourcedRepository implements Repository {
 
     }
 
+    /**
+     * Commit a list of events
+     * @param events Events list
+     * @private
+     */
     private async commitEvents(events: DomainEvent[]): Promise<void> {
         await this.store.commitAll(events);
     }
 
+    /**
+     * Dispatch a list of events
+     * @param events Events list
+     * @private
+     */
     private async dispatchEvents(events: DomainEvent[]): Promise<void> {
 
         const dispatchingEvents = events.map(event => this.dispatcher.dispatch(event));
