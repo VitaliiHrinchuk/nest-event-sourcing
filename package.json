@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "npm run build && ts-node test.ts",
-    "prepare" : "npm run build",
+    "prepare": "npm run build"
   },
   "author": "locopio",
   "license": "MIT",
@@ -32,6 +32,10 @@
   "files": [
     "/dist/**/*"
   ],
-  "keywords": ["nestjs", "event store", "event sourcing"],
+  "keywords": [
+    "nestjs",
+    "event store",
+    "event sourcing"
+  ],
   "homepage": "https://github.com/VitaliiHrinchuk/nest-event-sourcing"
 }
