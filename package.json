@@ -1,6 +1,6 @@
 {
   "name": "nest-event-sourcing",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "the package contains a set of classes and interfaces to implement event sourcing with nest js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

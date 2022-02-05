@@ -36,12 +36,12 @@ export abstract class DomainEvent implements IEvent {
     /**
      * Event payload
      */
-    payload?: object;
+    payload?: any;
 
     /**
      * Event meta
      */
-    metadata?: object;
+    metadata?: any;
 
     constructor(id?: string) {
         this.name = this.constructor.name;
