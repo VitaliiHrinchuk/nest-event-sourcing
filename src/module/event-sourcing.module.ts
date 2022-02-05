@@ -13,10 +13,7 @@ export class EventSourcingModule {
         return {
             module: EventSourcingModule,
             providers: [
-                {
-                    provide: EventDispatcher,
-                    useValue: new EventDispatcher(),
-                },
+                EventDispatcher,
                 {
                     provide: 'EventStore',
                     useFactory: async () => {
@@ -44,10 +41,7 @@ export class EventSourcingModule {
             imports: options.imports || [],
             providers: [
                 ...this.createAsyncProviders(options),
-                {
-                    provide: EventDispatcher,
-                    useValue: new EventDispatcher(),
-                },
+                EventDispatcher,
                 {
                     provide: 'EventStore',
                     useFactory: async (options: EventSourcingOptions) => {
@@ -106,13 +100,17 @@ export class EventSourcingModule {
             providers: [
                 {
                     provide: EVENT_DISPATCHER_HANDLERS,
-                    useFactory: (dispatcher: EventDispatcher) => {
+                    useFactory: async (dispatcher: EventDispatcher) => {
+                        const listenersPromise: Promise<void>[] = [];
+
                         handlers.forEach(handler => {
-                            dispatcher.listen(handler.event.name, handler.handler);
-                        })
+                            listenersPromise.push(dispatcher.listen(handler.event.name, handler.handler));
+                        });
+
+                        await Promise.all(listenersPromise);
                     },
                     inject: [EventDispatcher]
-                }
+                },
             ]
         }
     }

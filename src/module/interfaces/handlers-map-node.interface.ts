@@ -1,8 +1,10 @@
-import { DomainEvent } from "src/event-store";
+import { DomainEvent } from "../../event-store";
 import {EventHandler} from "../../dispatcher/interfaces";
+import {Projector, Reactor} from "../../dispatcher";
+import {Type} from "@nestjs/common";
 
 export interface HandlersMapNode {
-    event: typeof DomainEvent,
-    handler: EventHandler
+    event: Type<DomainEvent>,
+    handler: Type<EventHandler>
 }
 
