@@ -101,13 +101,9 @@ export class EventSourcingModule {
                 {
                     provide: EVENT_DISPATCHER_HANDLERS,
                     useFactory: async (dispatcher: EventDispatcher) => {
-                        const listenersPromise: Promise<void>[] = [];
-
                         handlers.forEach(handler => {
-                            listenersPromise.push(dispatcher.listen(handler.event.name, handler.handler));
+                            dispatcher.listen(handler.event.name, handler.handler)
                         });
-
-                        await Promise.all(listenersPromise);
                     },
                     inject: [EventDispatcher]
                 },

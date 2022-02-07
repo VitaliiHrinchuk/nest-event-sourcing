@@ -1,24 +1,25 @@
 import {DomainEvent} from "../event-store/event";
 import {EventHandler} from "./interfaces/event-handler.interface";
-import {Global, Injectable, Type} from "@nestjs/common";
+import {Global, Injectable, OnModuleInit, Type} from "@nestjs/common";
 import {Dispatcher} from "./interfaces";
 import {Projector} from "./projector";
 import {Reactor} from "./reactor";
 import {ModuleRef} from "@nestjs/core";
 
 @Injectable()
-export class EventDispatcher implements Dispatcher {
+export class EventDispatcher implements Dispatcher{
 
     /**
      * Map of event handlers
      * @private
      */
-    private listeners: Map<string, EventHandler>;
+    //private listeners: Map<string, EventHandler>;
+    private listeners: Map<string, Type<EventHandler>>;
 
     private moduleRef: ModuleRef;
 
     constructor(moduleRef: ModuleRef) {
-        this.listeners = new Map<string, EventHandler>();
+        this.listeners = new Map<string, Type<EventHandler>>();
         this.moduleRef = moduleRef;
     }
 
@@ -45,8 +46,7 @@ export class EventDispatcher implements Dispatcher {
      */
     public async listen(name: string, handler: Type<EventHandler>): Promise<void> {
         if (!this.listeners.has(name)) {
-            const eventHandler: EventHandler = await this.createCallableListener(handler);
-            this.listeners.set(name, eventHandler);
+            this.listeners.set(name, handler);
         }
     }
 
@@ -68,7 +68,8 @@ export class EventDispatcher implements Dispatcher {
         const name: string = this.getEventName(event);
 
         if (this.listeners.has(name)) {
-            return this.listeners.get(name);
+            const eventHandlerType = this.listeners.get(name);
+            return this.createCallableListener(eventHandlerType);
         } else {
             console.warn('No handler specified for the event: ' + name);
             return null;
@@ -98,8 +99,8 @@ export class EventDispatcher implements Dispatcher {
      * @return object
      * @throws BindingResolutionException
      */
-    private createCallableListener(handlerType: Type<EventHandler>): Promise<EventHandler> {
-        return this.moduleRef.create<EventHandler>(handlerType);
+    private createCallableListener(handlerType: Type<EventHandler>): EventHandler {
+        return this.moduleRef.get(handlerType, {strict: false});
     }
 
     private getListenerActionName(eventName: string): string {
