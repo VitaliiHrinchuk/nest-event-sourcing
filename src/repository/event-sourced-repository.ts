@@ -46,7 +46,10 @@ export class EventSourcedRepository implements Repository {
      * @private
      */
     private async commitEvents(events: DomainEvent[]): Promise<void> {
-        await this.store.commitAll(events);
+        //await this.store.commitAll(events);
+        for (const key in events) {
+            await this.store.commit(events[key]);
+        }
     }
 
     /**
@@ -56,8 +59,9 @@ export class EventSourcedRepository implements Repository {
      */
     private async dispatchEvents(events: DomainEvent[]): Promise<void> {
 
-        const dispatchingEvents = events.map(event => this.dispatcher.dispatch(event));
+        for (const key in events) {
+            await this.dispatcher.dispatch(events[key])
+        }
 
-        await Promise.all(dispatchingEvents);
     }
 }
