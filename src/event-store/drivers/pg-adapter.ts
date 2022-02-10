@@ -71,7 +71,7 @@ export class PgAdapter implements EventStore {
     async commitAll(events: DomainEvent[]): Promise<void> {
         const query: string = format(
             `INSERT INTO event_streams
-              (id, name, version, aggregate_id, aggregate_type, aggregate_version, payload, metadata)
+              (id, name, version, aggregate_id, aggregate_type, aggregate_version, payload, metadata, created_at)
              VALUES %L`,
             events.map(event => [
                 event.id,
@@ -81,7 +81,8 @@ export class PgAdapter implements EventStore {
                 event.aggregateType,
                 event.aggregateVersion,
                 event.payload,
-                event.metadata
+                event.metadata,
+                Date.now()
             ]));
 
         await this.client.query(query);

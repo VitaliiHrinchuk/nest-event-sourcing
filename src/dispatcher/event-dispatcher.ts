@@ -14,12 +14,12 @@ export class EventDispatcher implements Dispatcher{
      * @private
      */
     //private listeners: Map<string, EventHandler>;
-    private listeners: Map<string, Type<EventHandler>>;
+    private listeners: Map<string, Type<EventHandler>[]>;
 
     private moduleRef: ModuleRef;
 
     constructor(moduleRef: ModuleRef) {
-        this.listeners = new Map<string, Type<EventHandler>>();
+        this.listeners = new Map<string, Type<EventHandler>[]>();
         this.moduleRef = moduleRef;
     }
 
@@ -28,11 +28,15 @@ export class EventDispatcher implements Dispatcher{
      * @param event
      */
     public async dispatch(event: DomainEvent): Promise<void> {
-        const handler: EventHandler | null = this.getHandler(event);
+        const handlers: EventHandler[] | null = this.getHandlers(event);
 
-        if (handler) {
+        if (handlers) {
             try {
-                await this.handleEvent(event, handler);
+                const promises: Promise<void>[] = [];
+                handlers.forEach(handler => {
+                  promises.push(this.handleEvent(event, handler));
+                })
+                await Promise.all(promises);
             } catch (error) {
                 throw error;
             }
@@ -46,8 +50,13 @@ export class EventDispatcher implements Dispatcher{
      */
     public async listen(name: string, handler: Type<EventHandler>): Promise<void> {
         if (!this.listeners.has(name)) {
-            this.listeners.set(name, handler);
+            this.listeners.set(name, [handler]);
+        } else {
+            const handlers: Type<EventHandler>[] = this.listeners.get(name);
+            handlers.push(handler);
+            this.listeners.set(name, handlers);
         }
+        console.log(name,this.listeners.get(name))
     }
 
     /**
@@ -64,12 +73,12 @@ export class EventDispatcher implements Dispatcher{
      * @param event Event
      * @private
      */
-    private getHandler(event: DomainEvent): EventHandler | null {
+    private getHandlers(event: DomainEvent): EventHandler[] | null {
         const name: string = this.getEventName(event);
 
         if (this.listeners.has(name)) {
-            const eventHandlerType = this.listeners.get(name);
-            return this.createCallableListener(eventHandlerType);
+            const eventHandlerTypes = this.listeners.get(name);
+            return eventHandlerTypes.map(eventHandlerType => this.createCallableListener(eventHandlerType));
         } else {
             console.warn('No handler specified for the event: ' + name);
             return null;
@@ -82,14 +91,16 @@ export class EventDispatcher implements Dispatcher{
      * @private
      */
     private async replay(event: DomainEvent): Promise<void> {
-        const handler: EventHandler | null = this.getHandler(event);
+        const handlers: EventHandler[] | null = this.getHandlers(event);
 
-        if (handler && handler instanceof Projector) {
-            try {
-                await this.handleEvent(event, handler);
-            } catch (error) {
-                throw error;
-            }
+        if (handlers){
+            const promises: Promise<void>[] = [];
+            handlers.forEach(handler => {
+                if(handler instanceof Projector) {
+                    promises.push(this.handleEvent(event, handler));
+                }
+            })
+            await Promise.all(promises);
         }
     }
 

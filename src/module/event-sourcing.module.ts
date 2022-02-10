@@ -5,32 +5,14 @@ import {EventStore} from "../event-store";
 import {EventSourcedRepository} from "../repository";
 import {HandlersMapNode} from "./interfaces";
 import {EVENT_DISPATCHER_HANDLERS, EVENT_SOURCING_OPTIONS} from "./event-sourcing.constants";
+import {EventSourcingCoreModule} from "./event-sourcing-core.module";
 
 @Module({})
 export class EventSourcingModule {
     static forRoot(options: EventSourcingOptions): DynamicModule {
-        const eventStore: EventStore = options.driver;
         return {
             module: EventSourcingModule,
-            providers: [
-                EventDispatcher,
-                {
-                    provide: 'EventStore',
-                    useFactory: async () => {
-                        await eventStore.init();
-                        return eventStore;
-                    }
-                },
-                {
-                    provide: EventSourcedRepository,
-                    useFactory: (dispatcher: EventDispatcher, eventStore: EventStore) => {
-                        return new EventSourcedRepository(eventStore, dispatcher)
-                    },
-                    inject: [EventDispatcher, 'EventStore']
-                }
-            ],
-            exports: [EventSourcedRepository, EventDispatcher],
-            global: true,
+            imports: [EventSourcingCoreModule.forRoot(options)],
         };
     }
 
@@ -38,76 +20,53 @@ export class EventSourcingModule {
 
         return {
             module: EventSourcingModule,
-            imports: options.imports || [],
-            providers: [
-                ...this.createAsyncProviders(options),
-                EventDispatcher,
-                {
-                    provide: 'EventStore',
-                    useFactory: async (options: EventSourcingOptions) => {
-                        const eventStore: EventStore = options.driver;
-                        await eventStore.init();
-                        return eventStore;
-                    },
-                    inject: [EVENT_SOURCING_OPTIONS]
-                },
-                {
-                    provide: EventSourcedRepository,
-                    useFactory: (dispatcher: EventDispatcher, eventStore: EventStore) => {
-                        return new EventSourcedRepository(eventStore, dispatcher)
-                    },
-                    inject: [EventDispatcher, 'EventStore']
-                }
-            ],
-            exports: [EventSourcedRepository, EventDispatcher],
-            global: true
+            imports: [EventSourcingCoreModule.forRootAsync(options)],
         };
     }
 
-    private static createAsyncProviders(options: EventSourcingAsyncOptions): Provider[] {
-        if (options.useExisting || options.useFactory) {
-            return [this.createAsyncOptionsProvider(options)];
-        }
-        return [
-            this.createAsyncOptionsProvider(options),
-            {
-                provide: options.useClass,
-                useClass: options.useClass
-            }
-        ];
-    }
-
-    private static createAsyncOptionsProvider(options: EventSourcingAsyncOptions): Provider {
-        if (options.useFactory) {
-            return {
-                provide: EVENT_SOURCING_OPTIONS,
-                useFactory: options.useFactory,
-                inject: options.inject || []
-            };
-        }
-        return {
-            provide: EVENT_SOURCING_OPTIONS,
-            useFactory: async (optionsFactory: EventSourcingOptionsFactory) => await optionsFactory.createOptions(),
-            inject: [options.useExisting || options.useClass]
-        };
-    }
-
-
+    // static forFeature(handlers: HandlersMapNode[]): DynamicModule {
+    //     console.log('call1')
+    //     return {
+    //         module: EventSourcingModule,
+    //         providers: [
+    //             {
+    //                 provide: EVENT_DISPATCHER_HANDLERS +Math.random(),
+    //                 useFactory: async (dispatcher: EventDispatcher) => {
+    //                     console.log('cire', dispatcher)
+    //                     handlers.forEach(handler => {
+    //                         console.log('register handler',handler.event.name )
+    //                         dispatcher.listen(handler.event.name, handler.handler)
+    //                     });
+    //                 },
+    //                 inject: [EventDispatcher]
+    //             },
+    //         ],
+    //     }
+    // }
     static forFeature(handlers: HandlersMapNode[]): DynamicModule {
 
         return {
             module: EventSourcingModule,
-            providers: [
-                {
-                    provide: EVENT_DISPATCHER_HANDLERS,
+            // providers: [
+            //     {
+            //         provide: EVENT_DISPATCHER_HANDLERS + Math.random(),
+            //         useFactory: async (dispatcher: EventDispatcher) => {
+            //             handlers.forEach(handler => {
+            //                 console.log('register handler',handler.event.name )
+            //                 dispatcher.listen(handler.event.name, handler.handler)
+            //             });
+            //         },
+            //         inject: [EventDispatcher]
+            //     },
+            // ],
+            providers: handlers.map(handler => ({
+                    provide: handler.event.name + handler.handler.name,
                     useFactory: async (dispatcher: EventDispatcher) => {
-                        handlers.forEach(handler => {
-                            dispatcher.listen(handler.event.name, handler.handler)
-                        });
+                        await dispatcher.listen(handler.event.name, handler.handler)
                     },
                     inject: [EventDispatcher]
-                },
-            ]
+                }
+            ))
         }
     }
 }
