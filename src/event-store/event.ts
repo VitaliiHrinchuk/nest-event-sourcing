@@ -1,7 +1,7 @@
 import { IEvent } from '@nestjs/cqrs/dist/interfaces';
 import { v4 as uuidv4 } from 'uuid';
 
-export abstract class DomainEvent implements IEvent {
+export class DomainEvent implements IEvent {
 
     /**
      * UUID 4
@@ -44,7 +44,7 @@ export abstract class DomainEvent implements IEvent {
     metadata?: any;
 
     constructor(id?: string) {
-        this.name = this.constructor.name;
+            this.name = this.constructor.name;
         if (!id) {
             this.id = uuidv4();
         } else {

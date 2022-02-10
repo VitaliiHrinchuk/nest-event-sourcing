@@ -65,7 +65,11 @@ export class EventDispatcher implements Dispatcher{
      * @private
      */
     private getEventName(event: DomainEvent) {
-        return event.constructor.name;
+        if (event.name) {
+            return event.name;
+        } else {
+            return event.constructor.name;
+        }
     }
 
     /**
@@ -90,7 +94,7 @@ export class EventDispatcher implements Dispatcher{
      * @param event Event
      * @private
      */
-    private async replay(event: DomainEvent): Promise<void> {
+    public async replay(event: DomainEvent): Promise<void> {
         const handlers: EventHandler[] | null = this.getHandlers(event);
 
         if (handlers){

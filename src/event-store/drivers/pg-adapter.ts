@@ -58,8 +58,8 @@ export class PgAdapter implements EventStore {
     public async loadAll(): Promise<Array<EventParameters>> {
         const query: QueryConfig = {
             text: `SELECT * FROM event_streams
-                   WHERE aggregate_id NOT NULL,
-                   ORDER_BY created_at ASC`,
+                   WHERE aggregate_id IS NOT NULL
+                   ORDER BY created_at ASC`,
         };
         const result: QueryResult = await this.client.query(query);
 
